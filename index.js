@@ -3,6 +3,15 @@ var http = require('http').Server(app);
 var io = exports.io = require('socket.io')(http);
 var port = process.env.PORT || 3000;
 
+app.use(function (req, res, next) {
+        res.setHeader('Access-Control-Allow-Origin', '*');
+
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+        res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+        next();
+    }
+);
+
 var lobby = {};
 var liveGames = exports.liveGames = {};
 var sockets = exports.sockets = {};
@@ -17,7 +26,6 @@ for (var game in gameMenu) {
 
 io.on('connection', function(socket){
   console.log('user connected');
-  // io.emit('updateLobby', lobby);
   socket.emit('updateLobby', lobby);
   socket.emit('gamesInfo', gamesInfo);
 
@@ -31,7 +39,6 @@ io.on('connection', function(socket){
 
     if (lobby[gameID]) {
       console.log('lobby[gameID] exists');
-      // console.log('old lobby game: ', lobby[gameID]);
       var players = lobby[gameID].players;
       console.log(players);
       var playerNames = players.map(function(player) {
@@ -47,7 +54,6 @@ io.on('connection', function(socket){
           delete lobby[gameID];
           delete sockets[gameID];
         }
-        // console.log('new lobby game: ', lobby[gameID]);
         io.emit('updateLobby', lobby);
       }
     }
@@ -79,7 +85,6 @@ io.on('connection', function(socket){
       sockets[gameID][playerName] = socket;
       players.push(player);
       var gameType = lobby[gameID].gameType;
-      // var numJoined = players.length;
 
         console.log('gameType', gameType);
       if (gameMenu[gameType] && players.length === gameMenu[gameType].gameInfo.maxPlayers) {
@@ -91,7 +96,6 @@ io.on('connection', function(socket){
       // emit some kind of indicator that game is no longer available
       socket.emit('gameJoinFailure');
     }
-    // console.log('lobby', JSON.stringify(lobby));
     io.emit('updateLobby', lobby);
 
   });

@@ -6,6 +6,11 @@ module.exports.gameInfo = {
   minPlayers: 4
   ,
   maxPlayers: 4 //for now for simplicity set both to 4
+  ,
+  // Note: use backslash (\) at the end of each line. For new lines
+  // or paragraphs, do not use the newline (\n) as it wil not work.
+  // Instead, make each paragraph a separate string in the array
+  instructions: [""]
 };
 
 module.exports.play = Assassins; // for now. will change to a generic name

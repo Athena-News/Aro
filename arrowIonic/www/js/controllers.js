@@ -1,131 +1,19 @@
 angular.module('starter.controllers', [])
 
-// .controller('MapCtrl', function($rootScope, $scope, $cordovaGeolocation) {
-
-//   // Get geolocation of user's current position and initialize map
-//   $cordovaGeolocation.getCurrentPosition({timeout: 10000, enableHighAccuracy: true})
-//     .then(function(currentPosition) {
-
-//       $rootScope.currentPosition = new google.maps.LatLng(currentPosition.coords.latitude, currentPosition.coords.longitude);
-//       $scope.geocoder = new google.maps.Geocoder();
-//       initializeMap($rootScope.currentPosition);
-
-//     }, function(error) {
-//       console.log("Could not get current location");
-//     }); // end cordovaGeolocation
-
-//   var initializeMap = function(currentPosition) {
-
-//     var mapOptions = {
-//       center: currentPosition,
-//       zoom: 15,
-//       mapTypeId: google.maps.MapTypeId.ROADMAP,
-//       disableDefaultUI: true,
-//     };
-
-//     $scope.map = new google.maps.Map(document.getElementById("map"), mapOptions);
-
-//     google.maps.event.addDomListener($scope.map, 'mousedown', function(e){
-//       $scope.mousePosition = e.latLng;
-//       if (document.getElementById('deleteMarkerButton').style.display === 'block') {
-//         document.getElementById('setArrowButton').style.display = 'none';
-//         document.getElementById('deleteMarkerButton').style.display = 'none';
-//         document.getElementById('currentLocButton').style.display = 'block';
-//       }
-//       infowindow.close();
-//     });
-
-//   }; // end initializeMap
-
-//   var infowindow = new google.maps.InfoWindow({ content: 'Selected' });
-
-//   $scope.currentLocation = function() {
-//     $scope.map.setCenter($rootScope.currentPosition);
-//   };
-
-//   var markers = [];
-//   var markerID = 0;
-//   $scope.createMarker = function(position) {
-
-//     // Save the location of where the marker is created
-//     // to access from the compass
-//     $rootScope.markerPosition = position;
-
-//     var marker = new google.maps.Marker({
-//       map: $scope.map,
-//       animation: google.maps.Animation.DROP,
-//       draggable: true,
-//       position: position
-//     });
-
-//     marker.id = markerID;
-//     markerID++;
-//     markers.push(marker);
-
-//     marker.addListener('click', function() {
-//       $scope.markerID = this.id;
-//       if (document.getElementById('deleteMarkerButton').style.display === 'block') {
-//         document.getElementById('setArrowButton').style.display = 'none';
-//         document.getElementById('deleteMarkerButton').style.display = 'none';
-//         document.getElementById('currentLocButton').style.display = 'block';
-//       } else {
-//         document.getElementById('setArrowButton').style.display = 'block';
-//         document.getElementById('deleteMarkerButton').style.display = 'block';
-//         document.getElementById('currentLocButton').style.display = 'none';
-//       }
-//       infowindow.open($scope.map, marker);
-//     });
-
-//     if (position === $rootScope.currentPosition) $scope.map.setCenter(position);
-
-//   }; // end createMarker
-
-//   $scope.deleteMarker = function(markerID) {
-//     for (var i = 0; i < markers.length; i++) {
-//       if (markers[i].id === markerID) {
-//         markers[i].setMap(null);
-//         markers.splice(i, 1);
-//         document.getElementById('deleteMarkerButton').style.display = 'none';
-//         document.getElementById('setArrowButton').style.display = 'none';
-//         document.getElementById('currentLocButton').style.display = 'block';
-//         return;
-//       }
-//     }
-//   }; // end deleteMarker
-
-//   // geocodes a human readable address & stores long/lat in var coordsResult
-//   $scope.geocodeAddress = function(geocoder, map) {
-
-//     var address = document.getElementById('address').value;
-
-//     $scope.geocoder.geocode({'address': address}, function(results, status) {
-//       if (status === google.maps.GeocoderStatus.OK) {
-//         $scope.map.setCenter(results[0].geometry.location);
-//         var coordsResult = results[0].geometry.location;
-//         console.log(coordsResult);
-//       } else {
-//         alert('Geocode was not successful for the following reason: ' + status);
-//       }
-//     });
-
-//   }; // end geocodeAddress
-
-// })
-
-  // With the new view caching in Ionic, Controllers are only called
-  // when they are recreated or on app start, instead of every page change.
-  // To listen for when this page is active (for example, to refresh data),
-  // listen for the $ionicView.enter event:
-  //
-  //$scope.$on('$ionicView.enter', function(e) {
-  //});
-
-
 .controller('CompassCtrl', function($rootScope, $scope, $state, $cordovaDeviceOrientation, $cordovaGeolocation, $ionicScrollDelegate, socket, options) {
 
   var demo = options.demo;
   var demoStartDistance = options.demoStartDistance;
-  //var demoDistanceAdd = 0;
+
+  // message
+  // 1.if game has not started or joined: '' or maybe 'Welcome, [playerName]!'
+  // 6.if target not yet received: 'Waiting for a new target...'
+  // 4.when target received: 'New target recieved' for a few seconds
+  // 7.'[#.##] miles to [targetName]' after a few seconds
+  // 8. if NaN: ''
+  // 5.when target location updated: 'Target location updated' for a few seconds
+  // 3.when target acquired: 'Target acquired!' for a few seconds
+  // 2.when player out: 'You're out!'
 
   $rootScope.$watch('hasJoinedGame', function() {
     $scope.hasJoinedGame = $rootScope.hasJoinedGame || ($scope.winnerMessage = false);
@@ -140,13 +28,7 @@ angular.module('starter.controllers', [])
     $scope.playerIsOut = $rootScope.playerIsOut;
   });
   $rootScope.$watch('gameInSession', function() {
-    console.log('gameInSession', $rootScope.gameInSession);
     $scope.gameInSession = $rootScope.gameInSession;
-  });
-
-  socket.on('gameStart', function() {
-    console.log('gameStart triggered');
-    $rootScope.gameInSession = true;
   });
 
   socket.on('getCurrLocation', function(playerNames) {
@@ -163,7 +45,7 @@ angular.module('starter.controllers', [])
       $scope.targetHasBeenUpdated = true;
       $scope.targetName = target.playerName;
       $scope.targetLocation = target.location;
-      console.log('new target is ' + target.playerName);
+      // console.log('new target is ' + target.playerName);
       if (demo) {
         $scope.distance = demoStartDistance;
         var decrementDistance = function() {
@@ -189,9 +71,9 @@ angular.module('starter.controllers', [])
 
   socket.on('playerOut', function(playerName) {
     if (playerName === $rootScope.playerName) {
-      console.log(playerName + ' is out!');
+      // console.log(playerName + ' is out!');
       $rootScope.playerIsOut = $scope.playerIsOut = true;
-      console.log('playerIsOut', $scope.playerIsOut);
+      // console.log('playerIsOut', $scope.playerIsOut);
     }
   });
 
@@ -206,11 +88,42 @@ angular.module('starter.controllers', [])
     }, 1000);
   });
 
+  var prevMessage;
+
+  var displayMessage = function() {
+    prevMessage = $scope.message;
+    if (!$scope.gameInSession) {
+      $scope.message = '';
+    } else if ($scope.playerIsOut) {
+      $scope.message = "You're out!";
+    } else if ($scope.targetAcquired) {
+      $scope.message = 'Target acquired!';
+    } else if ($scope.targetHasBeenUpdated) {
+      $scope.message = 'New target';
+    } else if (!$scope.distance || !$scope.targetName) {
+      $scope.message = 'Waiting for a new target...'
+    } else {
+      $scope.message = $scope.distance + ' miles to target ' + $scope.targetName;
+    }
+
+    if (prevMessage !== $scope.message) {
+      $scope.digest();
+    }
+  };
+
+  if (demo) {
+    var demoUpdateMessage = function() {
+      displayMessage();
+      setTimeout(demoUpdateMessage, 1000);
+    }
+    demoUpdateMessage();
+  }
+
   document.addEventListener("deviceready", function () {
   // will need to test if waiting for deviceready may cause
   // a problem if the server emits 'newTarget' before deviceready
 
-    console.log('deviceready ran');
+    // console.log('deviceready ran');
     var here, there, heading, bearing;
 
     $scope.targetLocation = {};
@@ -240,11 +153,12 @@ angular.module('starter.controllers', [])
 
       if (!demo) {
         $scope.distance = Number(turf.distance(here, there, 'miles')).toFixed(4);
+        displayMessage();
         if ($scope.distance < options.targetRadius && !$scope.targetAcquired && !$scope.playerIsOut) {
           $scope.distance = 0;
           $scope.targetAcquired = true;
           socket.emit('acquiredTarget', $scope.targetName);
-          console.log('acquiredTarget emitted');
+          // console.log('acquiredTarget emitted');
         }
       }
     });
@@ -257,12 +171,9 @@ angular.module('starter.controllers', [])
     $scope.watch = $cordovaDeviceOrientation.watchHeading(orientationOptions).then(
       null,
       function(error) {
-        //$scope.heading = err;
       },
       function(result) {
         heading = ionic.Platform.isIOS() ? result.magneticHeading : result.trueHeading;
-        //$scope.compass = 'transform: rotate(-'+ heading +'deg)';
-        //$scope.heading = heading;
         bearing = Math.floor(turf.bearing(here, there) - heading + 90);
         $scope.rotation = '-webkit-transform: rotate('+ bearing +'deg);transform: rotate('+ bearing +'deg);';
     });
@@ -278,11 +189,11 @@ angular.module('starter.controllers', [])
   var chars = codeOptions.chars;
   var privateGameCodes = {};
 
-  // $scope.gameTypes = options.gameTypes;
   $scope.publicGames = {noGames: true};
   $scope.createdGame = {isPrivate: false};
   $scope.register = {};
   $scope.game = {};
+  // will add these back in later
   // $scope.now = new Date();
   // setTimeout(function() { $scope.now = new Date(); }, 1000);
 
@@ -291,8 +202,8 @@ angular.module('starter.controllers', [])
   };
 
   socket.on('updateLobby', function(newLobby) {
-    console.log('updateLobby received');
-    console.log(newLobby);
+    // console.log('updateLobby received');
+    // console.log(newLobby);
     // completing list first before assiging it
     // to scope variable, so that the user does
     // not visually see list get populated
@@ -311,11 +222,11 @@ angular.module('starter.controllers', [])
 
     $scope.publicGames = publicGames;
     privateGameCodes = privateGames;
-    console.log($scope.publicGames);
+    // console.log($scope.publicGames);
   });
 
   socket.on('gamesInfo', function(gamesInfo) {
-    console.log(gamesInfo);
+    // console.log(gamesInfo);
     $scope.gamesInfo = gamesInfo;
     $scope.createdGame.gameType = Object.keys(gamesInfo)[0];
   });
@@ -326,6 +237,11 @@ angular.module('starter.controllers', [])
     $scope.joining = false;
     // switch tabs to game tab
     $state.go('tab.compass');
+  });
+
+  socket.on('gameStart', function() {
+    // console.log('gameStart triggered');
+    $rootScope.gameInSession = true;
   });
 
   socket.on('gameJoinFailure', function() {
@@ -360,7 +276,7 @@ angular.module('starter.controllers', [])
       // checks if already exists
     } else {
       gameID = gameID.toUpperCase();
-      console.log('gameID', gameID);
+      // console.log('gameID', gameID);
       if (!(privateGameCodes[gameID] || $scope.publicGames[gameID])) {
         $scope.joining = false;
         $scope.game.notExist = true;
@@ -377,7 +293,7 @@ angular.module('starter.controllers', [])
           latitude: currentPosition.coords.latitude,
           longitude: currentPosition.coords.longitude
         };
-        console.log('$scope.createdGame', $scope.createdGame);
+        // console.log('$scope.createdGame', $scope.createdGame);
         $scope.playerObj = {
           location: $rootScope.location,
           playerName: $scope.playerName,
